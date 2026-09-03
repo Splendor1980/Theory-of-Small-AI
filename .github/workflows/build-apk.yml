@@ -75,6 +75,21 @@ jobs:
         run: |
           ./godot.x86_64 --headless --path project_build --check-only || true
 
+      # 3b) Godot требует Android SDK и Java пути в Editor Settings для gradle-экспорта
+      - name: Configure Godot editor settings (Android SDK + Java)
+        run: |
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path="$ANDROID_HOME"
+          export/android/java_sdk_path="$JAVA_HOME"
+          export/android/android_build_tools_picker=1
+          EOF
+          echo "wrote $HOME/.config/godot/editor_settings-4.tres"
+          cat "$HOME/.config/godot/editor_settings-4.tres"
+
       # 4) Сборка APK; keystore подаём через env → подставится в export_presets.cfg
       - name: Export APK
         env:
