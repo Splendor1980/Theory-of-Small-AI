@@ -70,7 +70,7 @@ jobs:
           unzip -o Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d /tmp/et
           mv /tmp/et/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
           ls ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
-          # Gradle-export требует res://android/build/build.gradle.
+          # Gradle-export требует res://android/build/build.gradle И res://android/.build_version.
           # android_source.zip содержит файлы android-проекта на корне
           # (build.gradle, AndroidManifest.xml, src/, ...) — распаковываем
           # в project_build/android/build/, чтобы they попали в res://android/build/.
@@ -81,6 +81,10 @@ jobs:
           echo "== res://android/build/ contents =="
           ls project_build/android/build/
           test -f project_build/android/build/build.gradle && echo "OK: build.gradle found" || echo "FAIL: build.gradle NOT found"
+          # Gradle-export читает res://android/.build_version и сверяет с версией Godot.
+          # Обычно его создаёт Project -> Install Android Build Template; в CI ставим вручную.
+          printf '%s\n' "${GODOT_VERSION}.stable" > project_build/android/.build_version
+          cat project_build/android/.build_version
           # Также кладём в userdata (fallback path)
           mkdir -p ~/.local/share/godot/android/build_templates
           unzip -o -q ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d ~/.local/share/godot/android/build_templates
