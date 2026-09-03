@@ -1,0 +1,15 @@
+# runtime / память (не коммитим)
+_data/
+agent1/_data/
+build/
+project_build/
+
+# python
+__pycache__/
+*.pyc
+
+# godot
+.godot/
+*.import
+*.apk
+debug.keystore

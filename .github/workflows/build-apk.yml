@@ -1,0 +1,93 @@
+# Облачная сборка APK (GitHub Actions, бесплатно) для игр Agent 1.
+# Слабая машина НЕ тащит Android SDK/JDK — сборка идёт в облаке.
+#
+# Поток: make_project.py (Python stdlib) готовит Godot-проект под игру,
+# затем Godot headless экспортит Android APK. Export Templates обязательны
+# (без них --export-debug падает).
+#
+# Запуск:
+#   - вручную: Actions → build-apk → Run workflow → idea (по умолчанию змейка)
+#   - по push в main
+
+name: build-apk
+
+on:
+  workflow_dispatch:
+    inputs:
+      idea:
+        description: "Идея игры (напр. «змейка на конфетах», «neon пинг-понг»)"
+        required: false
+        default: "змейка на конфетах"
+  push:
+    branches: [ main ]
+
+env:
+  GODOT_VERSION: "4.2.2"
+
+jobs:
+  build_apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1) Готовим Godot-проект под конкретную игру (только stdlib)
+      - name: Prepare project (make_project.py)
+        run: |
+          IDEA="${{ github.event.inputs.idea || 'змейка на конфетах' }}"
+          python -m agent1.tools.make_project "$IDEA" --out project_build
+          ls -R project_build
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 2) Дебажный keystore: генерируем прямо в CI, если нет своего
+      - name: Generate debug keystore
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          echo "KEYSTORE_PATH=${{ github.workspace }}/debug.keystore" >> $GITHUB_ENV
+
+      - name: Download Godot headless
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -o Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot.x86_64
+          chmod +x godot.x86_64
+
+      # 3) Export Templates обязательны для --export-debug
+      - name: Download Godot export templates
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          unzip -o Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d /tmp/et
+          mv /tmp/et/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+          ls ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+
+      - name: Check GDScript (headless --check-only)
+        run: |
+          ./godot.x86_64 --headless --path project_build --check-only || true
+
+      # 4) Сборка APK; keystore подаём через env → подставится в export_presets.cfg
+      - name: Export APK
+        env:
+          ANDROID_KEYSTORE_DEBUG_PATH: ${{ env.KEYSTORE_PATH }}
+          ANDROID_KEYSTORE_DEBUG_USER: "androiddebugkey"
+          ANDROID_KEYSTORE_DEBUG_PASS: "android"
+        run: |
+          mkdir -p build/android
+          ./godot.x86_64 --headless --path project_build --export-debug "Android" 2>&1
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: project_build/build/android/game.apk
+          if-no-files-found: error

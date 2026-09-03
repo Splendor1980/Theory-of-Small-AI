@@ -1,0 +1,7 @@
+[
+  ["genre", "is", "platformer"],
+  ["genre", "is", "runner"],
+  ["color_scheme", "is", "neon"],
+  ["enemy_behavior", "is", "chase"],
+  ["level_type", "is", "side_scroll"]
+]

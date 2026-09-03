@@ -1,0 +1,23 @@
+; Engine configuration file (Godot 4.x)
+; Готовится make_project.py под конкретную игру. Точка входа — main.tscn.
+
+config_version=5
+
+[application]
+
+config/name="Agent 1 Game"
+config/version="0.1.0"
+config/features=PackedStringArray("4.2", "Forward+")
+run/main_scene="res://main.tscn"
+run/main_loop_type="SceneTree"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="mobile"
