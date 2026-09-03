@@ -64,11 +64,32 @@ export templates -> `--export-debug "Android"` -> APK artifact.
    проекта и в userdata `build_templates`. Готово, но ещё не верифицировано
    локально/в CI после возврата `use_gradle_build=true`.
 
-### Что делать дальше
-1. `git status` — закоммитьть `export_presets.cfg` (возврат `use_gradle_build=true`).
-2. `gh workflow run build-apk -R Splendor1980/Theory-of-Small-AI -f idea="змейка на конфетах"`
-   -> `gh run watch <id>` -> при красном `gh run view <id> --log-failed`.
-3. Цель — зелёный Export APK и download артефакта `android-apk`.
+### Итог: CI зелёный, APK собран (05.09.2026)
+Шаг «Export APK» доведён до зелёного; `build_apk` → `success`, артефакт
+`android-apk` (game.apk) выложен и скачан в `build/android/game.apk`.
+
+Исправленные в этой сессии корни (по порядку срабатывания в CI):
+1. **use_gradle_build=true** — возврат в `agent1/project/export_presets.cfg`.
+2. **Путь распаковки шаблона** — `android_source.zip` содержит файлы
+   (build.gradle, AndroidManifest.xml, src/...) на корне, поэтому распаковывается
+   в `project_build/android/build/`, чтобы получился `res://android/build/build.gradle`
+   (Godot 4.2 проверяет `DirAccess::exists("res://android/build")`).
+3. **min_sdk 23→24** — mobile-рендерер требует SDK>=24.
+4. **import_etc2_astc=true** — добавлено в `project.godot`. Без него export валится
+   «Cannot export ... due to configuration errors» с ПУСТОЙ строкой (это единственный
+   жёсткий чек без текста ошибки: `!should_import_etc2_astc()`); десктоп/headless
+   хост даёт S3TC/BPTC, а Android нужен ETC2/ASTC.
+5. **res://android/.build_version** = `4.2.2.stable` — gradle-export открывает этот
+   файл и сверяет с версией (`VERSION_FULL_CONFIG`). Обычно создаёт «Install Android
+   Build Template»; в CI пишем вручную. Иначе: «no version info for it exists».
+6. **.gdignore в res://android/** — чтобы Godot НЕ импортировал ресурсы шаблона
+   (splash.png и т.п.) и не создавал `*.png.import`; иначе gradle
+   `:mergeDebugResources` падает «The file name must end with .xml or .png».
+   FileAccess и gradle `.gdignore` не затрагивает.
+
+Что дальше (опционально):
+- Обновить шаблонную игру (поменять `idea` в workflow_dispatch) и пересобрать.
+- Артефакт: Actions → run → `android-apk`, либо локально в `build/android/game.apk`.
 
 ### Полезное
 - Локально godot-headless: `...\Temp\opencode\godot\Godot_v4.2.2-stable_win64.exe`
