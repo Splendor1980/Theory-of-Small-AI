@@ -100,6 +100,7 @@ jobs:
           ANDROID_KEYSTORE_DEBUG_USER: "androiddebugkey"
           ANDROID_KEYSTORE_DEBUG_PASS: "android"
         run: |
+          # Godot сам не всегда раскрывает ${VAR} в пресете — подставляем реальный путь явно
           sed -i "s|\${ANDROID_KEYSTORE_DEBUG_PATH}|${ANDROID_KEYSTORE_DEBUG_PATH}|g" project_build/export_presets.cfg
           sed -i "s|\${ANDROID_KEYSTORE_DEBUG_USER}|${ANDROID_KEYSTORE_DEBUG_USER}|g" project_build/export_presets.cfg
           sed -i "s|\${ANDROID_KEYSTORE_DEBUG_PASS}|${ANDROID_KEYSTORE_DEBUG_PASS}|g" project_build/export_presets.cfg
