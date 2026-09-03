@@ -85,6 +85,10 @@ jobs:
           # Обычно его создаёт Project -> Install Android Build Template; в CI ставим вручную.
           printf '%s\n' "${GODOT_VERSION}.stable" > project_build/android/.build_version
           cat project_build/android/.build_version
+          # .gdignore не даёт Godot импортировать ресурсы шаблона (splash.png и т.п.),
+          # иначе рендерер Godot создаёт *.png.import, который ломает gradle :mergeDebugResources
+          # ("The file name must end with .xml or .png"). FileAccess и gradle это не затрагивает.
+          touch project_build/android/.gdignore
           # Также кладём в userdata (fallback path)
           mkdir -p ~/.local/share/godot/android/build_templates
           unzip -o -q ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d ~/.local/share/godot/android/build_templates
