@@ -70,15 +70,18 @@ jobs:
           unzip -o Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d /tmp/et
           mv /tmp/et/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
           ls ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
-          # Gradle-export требует распакованный Android build template (android_source.zip).
-          # android_source.zip содержит build/build.gradle на корне — распаковываем
-          # в project_build/android/, чтобы build.gradle оказался в res://android/build/.
-          echo "== contents of android_source.zip (top-level) =="
-          unzip -l ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip | head -20
-          unzip -o ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d project_build/android/
-          echo "== project_build/android/ contents =="
-          ls -R project_build/android/ | head -30
-          # Также кладём в userdata (на случай, если Godot ищет там)
+          # Gradle-export требует res://android/build/build.gradle.
+          # android_source.zip содержит файлы android-проекта на корне
+          # (build.gradle, AndroidManifest.xml, src/, ...) — распаковываем
+          # в project_build/android/build/, чтобы they попали в res://android/build/.
+          echo "== contents of android_source.zip (top 15) =="
+          unzip -l ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip | head -15
+          mkdir -p project_build/android/build
+          unzip -o ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d project_build/android/build
+          echo "== res://android/build/ contents =="
+          ls project_build/android/build/
+          test -f project_build/android/build/build.gradle && echo "OK: build.gradle found" || echo "FAIL: build.gradle NOT found"
+          # Также кладём в userdata (fallback path)
           mkdir -p ~/.local/share/godot/android/build_templates
           unzip -o -q ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d ~/.local/share/godot/android/build_templates
 
