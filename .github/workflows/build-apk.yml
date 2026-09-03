@@ -70,15 +70,17 @@ jobs:
           unzip -o Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d /tmp/et
           mv /tmp/et/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
           ls ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
-          # Gradle-export требует распакованный Android build template (android_source.zip)
-          # в обоих вероятных местах: в проекте (res://android/build) и в userdata.
-          unzip -o -q ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d project_build/android/build || true
+          # Gradle-export требует распакованный Android build template (android_source.zip).
+          # android_source.zip содержит build/build.gradle на корне — распаковываем
+          # в project_build/android/, чтобы build.gradle оказался в res://android/build/.
+          echo "== contents of android_source.zip (top-level) =="
+          unzip -l ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip | head -20
+          unzip -o ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d project_build/android/
+          echo "== project_build/android/ contents =="
+          ls -R project_build/android/ | head -30
+          # Также кладём в userdata (на случай, если Godot ищет там)
           mkdir -p ~/.local/share/godot/android/build_templates
-          unzip -o -q ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d ~/.local/share/godot/android/build_templates || true
-          echo "== android/build in project =="
-          ls project_build/android/build 2>/dev/null | head -5
-          echo "== userdata build_templates =="
-          ls ~/.local/share/godot/android/build_templates | head -5
+          unzip -o -q ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip -d ~/.local/share/godot/android/build_templates
 
       - name: Check GDScript (headless --check-only)
         run: |
