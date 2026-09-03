@@ -81,7 +81,7 @@ func _handle_input() -> void:
 
 func _tick() -> void:
     dir = next_dir
-    var head := snake[0] + dir
+    var head: Vector2 = snake[0] + dir
     # стены
     if head.x < 0 or head.x >= grid_w or head.y < 0 or head.y >= grid_h:
         game_over = true
